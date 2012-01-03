@@ -17,24 +17,41 @@
 package no.kantega.publishing.common.service;
 
 import no.kantega.commons.exception.SystemException;
-import no.kantega.publishing.topicmaps.ao.TopicMapAO;
-import no.kantega.publishing.topicmaps.ao.TopicAO;
-import no.kantega.publishing.topicmaps.ao.TopicAssociationAO;
-import no.kantega.publishing.topicmaps.data.TopicMap;
-import no.kantega.publishing.topicmaps.data.Topic;
-import no.kantega.publishing.topicmaps.data.TopicAssociation;
-import no.kantega.publishing.topicmaps.data.TopicOccurence;
+import no.kantega.publishing.spring.RootContext;
+import no.kantega.publishing.topicmaps.ao.*;
+import no.kantega.publishing.topicmaps.data.*;
 import no.kantega.publishing.common.exception.ObjectInUseException;
 import no.kantega.publishing.common.service.impl.EventLog;
 import no.kantega.publishing.common.data.enums.Event;
 import no.kantega.publishing.security.data.SecurityIdentifier;
 import no.kantega.publishing.security.data.Role;
 import no.kantega.publishing.security.SecuritySession;
+import no.kantega.publishing.topicmaps.data.exception.ImportedTopicMapException;
+import no.kantega.publishing.topicmaps.impl.XTMImportWorker;
+import org.w3c.dom.Document;
+import org.xml.sax.SAXException;
 
 import javax.servlet.http.HttpServletRequest;
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
+import javax.xml.transform.TransformerException;
+import java.io.IOException;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.List;
 
 public class TopicMapService {
+
+    private static final String AKSESS_TOPIC_DAO = "aksessTopicDao";
+    private static final String AKSESS_TOPIC_ASSOCIATION_DAO = "aksessTopicAssociationDao";
+    private static final String AKSESS_TOPIC_MAP_DAO = "aksessTopicMapDao";
+
+    TopicMapDao topicMapDao;
+
+    TopicDao topicDao;
+
+    TopicAssociationDao topicAssociationDao;
 
     HttpServletRequest request = null;
     SecuritySession securitySession = null;
@@ -42,18 +59,84 @@ public class TopicMapService {
     public TopicMapService(HttpServletRequest request) throws SystemException {
         this.request = request;
         this.securitySession = SecuritySession.getInstance(request);
+        initDao();
     }
+
 
     public TopicMapService(SecuritySession securitySession) throws SystemException {
         this.securitySession = securitySession;
+        initDao();
     }
+
+    private void initDao() {
+        topicAssociationDao = (TopicAssociationDao) RootContext.getInstance().getBean(AKSESS_TOPIC_ASSOCIATION_DAO);
+        topicDao = (TopicDao) RootContext.getInstance().getBean(AKSESS_TOPIC_DAO);
+        topicMapDao= (TopicMapDao) RootContext.getInstance().getBean(AKSESS_TOPIC_MAP_DAO);
+    }
+
 
     public void deleteTopicMap(int id) throws SystemException, ObjectInUseException {
         TopicMapAO.deleteTopicMap(id);
     }
 
-    public void importTopicMap(int id) throws SystemException {
-        TopicMapAO.importTopicMap(id);
+    public ImportedTopicMap importTopicMap(int id) throws ImportedTopicMapException {
+        TopicMap topicMap = topicMapDao.getTopicMapById(id);
+        XTMImportWorker importWorker = new XTMImportWorker(id);
+        Document document = openDocument(topicMap);
+        List<Topic> topics;
+        List<TopicAssociation> topicAssociations;
+        try {
+            topics = importWorker.getTopicsFromDocument(document);
+            topicAssociations = importWorker.getTopicAssociationsFromDocument(document);
+        } catch (TransformerException e) {
+            throw new ImportedTopicMapException("Error importing topic map from url:" + topicMap.getUrl() + ". Verify url and try again.", e);
+        }
+        ImportedTopicMap importedTopicMap = new ImportedTopicMap(topicMap,topics,topicAssociations);
+        return importedTopicMap;
+    }
+
+    public void saveImportedTopicMap(ImportedTopicMap importedTopicMap) throws ObjectInUseException {
+        int topicMapId = importedTopicMap.getTopicMap().getId();
+        topicDao.deleteAllImportedTopics(topicMapId);
+        for(Topic topic : importedTopicMap.getTopicList()){
+            topicDao.setTopic(topic);
+            Topic instanceOf = topic.getInstanceOf();
+            Topic savedInstanceOf = topicDao.getTopic(importedTopicMap.getTopicMap().getId(), instanceOf.getId());
+            if(savedInstanceOf == null){
+                if(instanceOf.getBaseName() == null || instanceOf.getBaseName().isEmpty()){
+                    instanceOf.setBaseName(instanceOf.getId());
+                }
+                instanceOf.setImported(true);
+                instanceOf.setTopicMapId(importedTopicMap.getTopicMap().getId());
+                instanceOf.setIsTopicType(true);
+                topicDao.setTopic(instanceOf);
+            }
+        }
+        for(TopicAssociation topicAssociation: importedTopicMap.getTopicAssociationList()){
+            topicAssociationDao.addTopicAssociation(topicAssociation);
+        }
+    }
+
+    private Document openDocument(TopicMap topicMap) throws ImportedTopicMapException{
+        Document doc;
+        try {
+            URL file = new URL(topicMap.getUrl());
+            DocumentBuilderFactory docFactory = DocumentBuilderFactory.newInstance();
+            DocumentBuilder builder = docFactory.newDocumentBuilder();
+            doc = builder.parse(file.openStream());
+        } catch (MalformedURLException e) {
+            throw new ImportedTopicMapException("Error importing topic map from url:" + topicMap.getUrl() + ". Verify url and try again.", e);
+        }
+        catch (ParserConfigurationException e) {
+            throw new ImportedTopicMapException("Error importing topic map from url:" + topicMap.getUrl() + ". Verify url and try again.", e);
+        }
+        catch (IOException e) {
+            throw new ImportedTopicMapException("Error importing topic map from url:" + topicMap.getUrl() + ". Verify url and try again.", e);
+        }
+        catch (SAXException e){
+            throw new ImportedTopicMapException("Error importing topic map from url:" + topicMap.getUrl() + ". Verify url and try again.", e);
+        }
+        return doc;
     }
 
     public TopicMap getTopicMap(int id) throws SystemException {
@@ -99,7 +182,7 @@ public class TopicMapService {
         TopicAO.deleteTopic(topic);
         TopicAssociationAO.deleteTopicAssociations(topic);
     }
-    
+
 
     public List getTopicsByContentId(int contentId) throws SystemException {
         return TopicAO.getTopicsByContentId(contentId);

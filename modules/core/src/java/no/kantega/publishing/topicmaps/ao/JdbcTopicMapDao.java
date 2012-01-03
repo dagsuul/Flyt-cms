@@ -26,18 +26,13 @@ import no.kantega.publishing.topicmaps.data.TopicMap;
 import no.kantega.publishing.topicmaps.impl.XTMImportWorker;
 import org.springframework.jdbc.core.PreparedStatementCreator;
 import org.springframework.jdbc.core.simple.SimpleJdbcDaoSupport;
-import org.springframework.jdbc.support.GeneratedKeyHolder;
+import org.springframework.jdbc.core.simple.SimpleJdbcInsert;
 import org.springframework.jdbc.support.KeyHolder;
 import org.w3c.dom.Document;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
-import javax.xml.parsers.ParserConfigurationException;
-import java.io.IOException;
-import java.net.MalformedURLException;
 import java.net.URL;
-import java.sql.*;
-import java.sql.Date;
 import java.util.*;
 
 public class JdbcTopicMapDao extends SimpleJdbcDaoSupport implements TopicMapDao {
@@ -52,35 +47,25 @@ public class JdbcTopicMapDao extends SimpleJdbcDaoSupport implements TopicMapDao
     }
 
     public TopicMap saveOrUpdateTopicMap(final TopicMap topicMap) {
-        KeyHolder keyHolder = new GeneratedKeyHolder();
 
-        getJdbcTemplate().update(new PreparedStatementCreator() {
-            public PreparedStatement createPreparedStatement(Connection c) throws SQLException {
-                PreparedStatement st;
-                if (topicMap.isNew()) {
-                    st = c.prepareStatement("insert into tmmaps (Name, Url, IsEditable, WSOperation, WSSoapAction, WSEndPoint) values(?,?,?,?,?,?)", Statement.RETURN_GENERATED_KEYS);
-                } else {
-                    st = c.prepareStatement("update tmmaps set Name = ?, Url = ?, IsEditable = ?, WSOperation = ?, WSSoapAction = ?, WSEndPoint = ? where Id = ?");
-                }
-
-                int i = 1;
-                st.setString(i++, topicMap.getName());
-                st.setString(i++, topicMap.getUrl());
-                st.setInt(i++, topicMap.isEditable() ? 1 : 0);
-                st.setString(i++, topicMap.getWSOperation());
-                st.setString(i++, topicMap.getWSSoapAction());
-                st.setString(i++, topicMap.getWSEndPoint());
-
-                if (topicMap.getId() != -1){
-                    st.setInt(i, topicMap.getId());
-                }
-
-                return st;
-            }
-        }, keyHolder);
-
-        if (topicMap.isNew()) {
-            topicMap.setId(keyHolder.getKey().intValue());
+        Map<String, Object> params = new HashMap<String, Object>();
+        params.put("Name", topicMap.getName());
+        params.put("Url", topicMap.getUrl());
+        params.put("IsEditable", topicMap.isEditable() ? 1 : 0);
+        params.put("WSOperation", topicMap.getWSOperation());
+        params.put("WSSoapAction", topicMap.getWSSoapAction());
+        params.put("WSEndPoint", topicMap.getWSEndPoint());
+        if(topicMap.isNew()){
+            SimpleJdbcInsert insert = new SimpleJdbcInsert(getJdbcTemplate());
+            insert.setTableName("tmmaps");
+            insert.setGeneratedKeyName("ID");
+            KeyHolder keyHolder = insert.executeAndReturnKeyHolder(params);
+            Number number = keyHolder.getKey();
+            topicMap.setId(number.intValue());
+        }else{
+             params.put("id", topicMap.getId());
+            String sql = "UPDATE tmmaps SET Name=:Name, Url=:Url, IsEditable=:IsEditable, WSOperation=:WSOperation, WSSoapAction=:WSSoapAction, WSEndPoint=:WSEndPoint WHERE id=:id";
+            getSimpleJdbcTemplate().update(sql, params);
         }
         return topicMap;
     }
