@@ -112,6 +112,17 @@ public class XTMImportWorker{
         List<TopicBaseName> baseNames = new ArrayList<TopicBaseName>();
         for (int i = 0; i < elmBaseNames.getLength(); i++) {
             Element elmBaseName = (Element)elmBaseNames.item(i);
+            //TODO: Add support to query for mulitiple languages
+            // skip nynorsk, samisk and english
+            getAttributeValue(elmBaseName, "xlink:href", "scope/subjectIndicatorRef", "scope/topicRef");
+            Element elmScope = (Element)XPathAPI.selectSingleNode(elmBaseName, "scope/subjectIndicatorRef");
+            if (elmScope != null) {
+                String subjectIndRef = elmScope.getAttribute("xlink:href");
+                if (subjectIndRef != null && (subjectIndRef.indexOf("#nno") != -1 || subjectIndRef.indexOf("#eng") != -1 || subjectIndRef.indexOf("#sme") != -1)) {
+                    continue;
+                }
+            }
+
             TopicBaseName baseName = new TopicBaseName();
             String name  = XPathHelper.getString(elmBaseName, "baseNameString");
             baseName.setBaseName(name);
@@ -261,12 +272,12 @@ public class XTMImportWorker{
                 List baseNames = new ArrayList();
                 for (int i = 0; i < elmBaseNames.getLength(); i++) {
                     Element elmBaseName = (Element)elmBaseNames.item(i);
-                    //TODO: legg til støtte for å spørre etter flere språk
-                    // hopp over nynorsknoder
+                    //TODO: Add support to query for mulitiple languages
+                    // skip nynorsk, samisk and english
                     Element elmScope = (Element)XPathAPI.selectSingleNode(elmBaseName, "scope/subjectIndicatorRef");
                     if (elmScope != null) {
                         String subjectIndRef = elmScope.getAttribute("xlink:href");
-                        if (subjectIndRef != null && subjectIndRef.indexOf("#nno") != -1) {
+                        if (subjectIndRef != null && (subjectIndRef.indexOf("#nno") != -1 || subjectIndRef.indexOf("#sme") != -1 || subjectIndRef.indexOf("#eng") !=-1) ) {
                             continue;
                         }
                     }

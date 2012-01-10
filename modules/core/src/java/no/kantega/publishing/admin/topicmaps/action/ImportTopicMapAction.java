@@ -4,10 +4,9 @@ import no.kantega.commons.client.util.RequestParameters;
 import no.kantega.commons.log.Log;
 import no.kantega.publishing.common.service.TopicMapService;
 import no.kantega.publishing.topicmaps.data.ImportedTopicMap;
-import no.kantega.publishing.topicmaps.data.exception.ImportedTopicMapException;
+import no.kantega.publishing.topicmaps.data.exception.ImportTopicMapException;
 import org.springframework.web.servlet.ModelAndView;
 import org.springframework.web.servlet.mvc.AbstractController;
-import org.springframework.web.servlet.view.RedirectView;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -31,7 +30,7 @@ public class ImportTopicMapAction extends AbstractController {
                 ImportedTopicMap importedTopicMap = topicService.importTopicMap(id);
                 model.put("importedTopicMap", importedTopicMap);
                 addTopicMapToSession(importedTopicMap, request);
-            }catch (ImportedTopicMapException e){
+            }catch (ImportTopicMapException e){
                 model.put("errormessage", e.getMessage());
             }
         }

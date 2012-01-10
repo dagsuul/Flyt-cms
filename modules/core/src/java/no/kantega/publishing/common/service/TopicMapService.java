@@ -17,6 +17,7 @@
 package no.kantega.publishing.common.service;
 
 import no.kantega.commons.exception.SystemException;
+import no.kantega.commons.util.XMLHelper;
 import no.kantega.publishing.spring.RootContext;
 import no.kantega.publishing.topicmaps.ao.*;
 import no.kantega.publishing.topicmaps.data.*;
@@ -26,7 +27,7 @@ import no.kantega.publishing.common.data.enums.Event;
 import no.kantega.publishing.security.data.SecurityIdentifier;
 import no.kantega.publishing.security.data.Role;
 import no.kantega.publishing.security.SecuritySession;
-import no.kantega.publishing.topicmaps.data.exception.ImportedTopicMapException;
+import no.kantega.publishing.topicmaps.data.exception.ImportTopicMapException;
 import no.kantega.publishing.topicmaps.impl.XTMImportWorker;
 import org.w3c.dom.Document;
 import org.xml.sax.SAXException;
@@ -79,7 +80,7 @@ public class TopicMapService {
         TopicMapAO.deleteTopicMap(id);
     }
 
-    public ImportedTopicMap importTopicMap(int id) throws ImportedTopicMapException {
+    public ImportedTopicMap importTopicMap(int id) throws ImportTopicMapException {
         TopicMap topicMap = topicMapDao.getTopicMapById(id);
         XTMImportWorker importWorker = new XTMImportWorker(id);
         Document document = openDocument(topicMap);
@@ -89,7 +90,7 @@ public class TopicMapService {
             topics = importWorker.getTopicsFromDocument(document);
             topicAssociations = importWorker.getTopicAssociationsFromDocument(document);
         } catch (TransformerException e) {
-            throw new ImportedTopicMapException("Error importing topic map from url:" + topicMap.getUrl() + ". Verify url and try again.", e);
+            throw new ImportTopicMapException("Error importing topic map from url:" + topicMap.getUrl() + ". Verify url and try again.", e);
         }
         ImportedTopicMap importedTopicMap = new ImportedTopicMap(topicMap,topics,topicAssociations);
         return importedTopicMap;
@@ -99,43 +100,68 @@ public class TopicMapService {
         int topicMapId = importedTopicMap.getTopicMap().getId();
         topicDao.deleteAllImportedTopics(topicMapId);
         for(Topic topic : importedTopicMap.getTopicList()){
-            topicDao.setTopic(topic);
-            Topic instanceOf = topic.getInstanceOf();
-            Topic savedInstanceOf = topicDao.getTopic(importedTopicMap.getTopicMap().getId(), instanceOf.getId());
-            if(savedInstanceOf == null){
-                if(instanceOf.getBaseName() == null || instanceOf.getBaseName().isEmpty()){
-                    instanceOf.setBaseName(instanceOf.getId());
-                }
-                instanceOf.setImported(true);
-                instanceOf.setTopicMapId(importedTopicMap.getTopicMap().getId());
-                instanceOf.setIsTopicType(true);
-                topicDao.setTopic(instanceOf);
-            }
+            saveImportedTopic(topicMapId, topic);
         }
         for(TopicAssociation topicAssociation: importedTopicMap.getTopicAssociationList()){
-            topicAssociationDao.addTopicAssociation(topicAssociation);
+            saveImportedAssociation(topicMapId, topicAssociation);
+
         }
     }
 
-    private Document openDocument(TopicMap topicMap) throws ImportedTopicMapException{
+    private void saveImportedAssociation(int topicMapId, TopicAssociation topicAssociation) {
+        topicAssociationDao.addTopicAssociation(topicAssociation);
+        Topic instanceOf = topicAssociation.getInstanceOf();
+        instanceOf.setBaseName("er relatert til");
+        for(TopicBaseName topicBaseName: instanceOf.getBaseNames()){
+            topicBaseName.setScope(topicAssociation.getRolespec().getId());
+        }
+        /**
+         * When saving the instanceof the association, this may already be saved as the association is a bi-directional.
+         * The setTopic method deletes all basenames related to the topic.
+         * Therefore the basenames of the already saved instanceof must be added to this one.
+         */
+        Topic savedInstanceOf = topicDao.getTopic(instanceOf.getTopicMapId(),instanceOf.getId());
+        instanceOf.getBaseNames().addAll(savedInstanceOf.getBaseNames());
+
+        instanceOf.setImported(true);
+        instanceOf.setTopicMapId(topicMapId);
+        instanceOf.setIsTopicType(true);
+        topicDao.setTopic(instanceOf);
+    }
+
+    private void saveImportedTopic(int topicMapId, Topic topic) {
+        for(TopicBaseName topicBaseName: topic.getBaseNames()){
+            topicBaseName.setScope(topic.getInstanceOf().getId());
+        }
+        topicDao.setTopic(topic);
+        Topic instanceOf = topic.getInstanceOf();
+        Topic savedInstanceOf = topicDao.getTopic(topicMapId, instanceOf.getId());
+        if(savedInstanceOf == null){
+            if(instanceOf.getBaseName() == null || instanceOf.getBaseName().isEmpty()){
+                instanceOf.setBaseName(instanceOf.getId());
+            }
+            instanceOf.setImported(true);
+            instanceOf.setTopicMapId(topicMapId);
+            instanceOf.setIsTopicType(true);
+            topicDao.setTopic(instanceOf);
+        }
+    }
+
+    private void saveInstanceOf(int topicMapId, Topic instanceOf) {
+
+    }
+
+    private Document openDocument(TopicMap topicMap) throws ImportTopicMapException {
         Document doc;
         try {
-            URL file = new URL(topicMap.getUrl());
-            DocumentBuilderFactory docFactory = DocumentBuilderFactory.newInstance();
-            DocumentBuilder builder = docFactory.newDocumentBuilder();
-            doc = builder.parse(file.openStream());
+            doc = XMLHelper.openDocument(new URL(topicMap.getUrl()));
         } catch (MalformedURLException e) {
-            throw new ImportedTopicMapException("Error importing topic map from url:" + topicMap.getUrl() + ". Verify url and try again.", e);
+            throw new ImportTopicMapException("Error importing topic map from url:" + topicMap.getUrl() + ". Verify url and try again.", e);
         }
-        catch (ParserConfigurationException e) {
-            throw new ImportedTopicMapException("Error importing topic map from url:" + topicMap.getUrl() + ". Verify url and try again.", e);
+        catch (SystemException e) {
+            throw new ImportTopicMapException("Error importing topic map from url:" + topicMap.getUrl() + ". Verify url and try again.", e);
         }
-        catch (IOException e) {
-            throw new ImportedTopicMapException("Error importing topic map from url:" + topicMap.getUrl() + ". Verify url and try again.", e);
-        }
-        catch (SAXException e){
-            throw new ImportedTopicMapException("Error importing topic map from url:" + topicMap.getUrl() + ". Verify url and try again.", e);
-        }
+
         return doc;
     }
 
