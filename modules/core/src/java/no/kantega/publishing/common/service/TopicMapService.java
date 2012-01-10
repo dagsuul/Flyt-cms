@@ -147,10 +147,6 @@ public class TopicMapService {
         }
     }
 
-    private void saveInstanceOf(int topicMapId, Topic instanceOf) {
-
-    }
-
     private Document openDocument(TopicMap topicMap) throws ImportTopicMapException {
         Document doc;
         try {
