@@ -40,6 +40,8 @@ import no.kantega.publishing.topicmaps.ao.TopicAssociationAO;
 public class XTMImportWorker{
     private static final String SOURCE = "aksess.XTMImportWorker";
 
+    //In xtm 1.0 attribute xlink:href is used, in xtm 2.0 attribute href is used.
+    private static final String[] ATTRIBUTE_HREF = {"xlink:href","href"};
     public int topicMapId = -1;
 
     public XTMImportWorker(int topicMapId) {
@@ -53,9 +55,17 @@ public class XTMImportWorker{
             Element elmTopic = (Element)topics.item(i);
             Topic topic = getTopicFromElement(elmTopic);
             topic.setImported(true);
-            topicList.add(topic);
+
+            if (shouldTopicBeImported(topic)){
+                topicList.add(topic);
+            }
         }
         return topicList;
+    }
+
+    private boolean shouldTopicBeImported(Topic topic) {
+        //Ignore topics that don't have subjectidenty and instanceof
+        return topic.getInstanceOf() != null || topic.getSubjectIdentity() != null;
     }
 
     private Topic getTopicFromElement(Element topicElement) throws TransformerException {
@@ -65,14 +75,14 @@ public class XTMImportWorker{
             topic.setId(removeIdPrefix(id));
             topic.setTopicMapId(topicMapId);
 
-            String instanceOf = getAttributeValue(topicElement, "xlink:href", "instanceOf/topicRef","instanceOf/subjectIndicatorRef");
+            String instanceOf = getAttributeValue(topicElement, ATTRIBUTE_HREF, "instanceOf/topicRef","instanceOf/subjectIndicatorRef");
             if(instanceOf != null){
                 instanceOf = removeLeadingSquare(instanceOf);
                 instanceOf = removeIdPrefix(instanceOf);
                 topic.setInstanceOf(new Topic(instanceOf));
             }
 
-            String subjectIdentity = getAttributeValue(topicElement,"xlink:href", "subjectIdentity/subjectIndicatorRef");
+            String subjectIdentity = getAttributeValue(topicElement,ATTRIBUTE_HREF, "subjectIdentity/subjectIndicatorRef", "subjectIdentifier");
 
             if (subjectIdentity != null) {
                 subjectIdentity = removeIdPrefix(subjectIdentity);
@@ -88,12 +98,16 @@ public class XTMImportWorker{
         return topic;
     }
 
-    private String getAttributeValue(Element element,  String attribute,String... xpaths) throws TransformerException {
+    private String getAttributeValue(Element element,  String[] attributes,String... xpaths) throws TransformerException {
         String attributeValue = null;
         for(String xpath: xpaths){
             Element attributeElement = (Element)XPathAPI.selectSingleNode(element, xpath);
             if (attributeElement != null) {
-                attributeValue = attributeElement.getAttribute(attribute);
+                int index = 0;
+                while ((attributeValue == null || attributeValue.isEmpty()) && index < attributes.length){
+                    attributeValue = attributeElement.getAttribute(attributes[index]);
+                    index++;
+                }
             }
         }
 
@@ -101,20 +115,20 @@ public class XTMImportWorker{
     }
 
     private String removeLeadingSquare(String value){
-        if(value != null && value.charAt(0) == '#' ){
+        if(value != null && value.length() > 0 && value.charAt(0) == '#' ){
             value = value.substring(1, value.length());
         }
         return value;
     }
 
     private List<TopicBaseName> getBaseNamesForTopic(Element topicElement) throws TransformerException {
-        NodeList elmBaseNames = XPathAPI.selectNodeList(topicElement, "baseName");
+        NodeList elmBaseNames = selectNodeList(topicElement, "baseName", "name");
         List<TopicBaseName> baseNames = new ArrayList<TopicBaseName>();
         for (int i = 0; i < elmBaseNames.getLength(); i++) {
             Element elmBaseName = (Element)elmBaseNames.item(i);
             //TODO: Add support to query for mulitiple languages
             // skip nynorsk, samisk and english
-            getAttributeValue(elmBaseName, "xlink:href", "scope/subjectIndicatorRef", "scope/topicRef");
+            getAttributeValue(elmBaseName, ATTRIBUTE_HREF, "scope/subjectIndicatorRef", "scope/topicRef");
             Element elmScope = (Element)XPathAPI.selectSingleNode(elmBaseName, "scope/subjectIndicatorRef");
             if (elmScope != null) {
                 String subjectIndRef = elmScope.getAttribute("xlink:href");
@@ -124,10 +138,10 @@ public class XTMImportWorker{
             }
 
             TopicBaseName baseName = new TopicBaseName();
-            String name  = XPathHelper.getString(elmBaseName, "baseNameString");
+            String name  = getString(elmBaseName, "baseNameString", "value");
             baseName.setBaseName(name);
 
-            String scope = getAttributeValue(elmBaseName, "xlink:href", "scope/subjectIndicatorRef", "scope/topicRef");
+            String scope = getAttributeValue(elmBaseName, ATTRIBUTE_HREF, "scope/subjectIndicatorRef", "scope/topicRef");
             if (scope != null) {
                 scope = removeLeadingSquare(scope);
                 baseName.setScope(scope);
@@ -135,6 +149,28 @@ public class XTMImportWorker{
             baseNames.add(baseName);
         }
         return baseNames;
+    }
+    
+    private NodeList selectNodeList(Element element, String... elementNames) throws TransformerException {
+        NodeList elements = null;
+        for(String elementName: elementNames){
+            if(elements == null || elements.getLength() == 0){
+                elements = XPathAPI.selectNodeList(element, elementName);
+
+            }
+        }
+        return elements;
+    }
+    
+    private String getString(Element element, String... xpaths){
+        String value = null;
+        for(String xpath: xpaths){
+            if(value == null || value.isEmpty()){
+                value = XPathHelper.getString(element, xpath);
+            }
+        }
+        return value;
+        
     }
 
     private List<TopicOccurence> getOccurencesForTopic(Element topicElement) throws TransformerException {
@@ -147,7 +183,7 @@ public class XTMImportWorker{
             String resourceData  = XPathHelper.getString(elmOccurrence, "resourceData");
             occurence.setResourceData(resourceData);
 
-            String occurenceInstanceOf = getAttributeValue(elmOccurrence, "xlink:href", "instanceOf/topicRef","instanceOf/subjectIndicatorRef");
+            String occurenceInstanceOf = getAttributeValue(elmOccurrence, ATTRIBUTE_HREF, "type/topicRef","instanceOf/subjectIndicatorRef");
             if (occurenceInstanceOf != null ) {
                 occurenceInstanceOf = removeLeadingSquare(occurenceInstanceOf);
                 occurence.setInstanceOf(new Topic(occurenceInstanceOf));
@@ -163,19 +199,18 @@ public class XTMImportWorker{
         for (int i = 0; i < associations.getLength(); i++) {
             Element elmAssociation = (Element)associations.item(i);
 
-            // Topics er knyttet begge veier, opprettes som to topic associations
+            // Topics are bidirectional -> two associations
             TopicAssociation association1 = new TopicAssociation();
             TopicAssociation association2 = new TopicAssociation();
 
-            // Instans
-            String instanceOf = getAttributeValue(elmAssociation,"xlink:href","instanceOf/topicRef","instanceOf/subjectIndicatorRef");
+            String instanceOf = getAttributeValue(elmAssociation,ATTRIBUTE_HREF,"type/topicRef","instanceOf/subjectIndicatorRef");
             if (instanceOf != null) {
-                instanceOf = removeLeadingSquare(instanceOf);
+                instanceOf = removeIdPrefix(instanceOf);
                 association1.setInstanceOf(new Topic(instanceOf));
                 association2.setInstanceOf(new Topic(instanceOf));
             }
 
-            NodeList elmMembers = XPathAPI.selectNodeList(elmAssociation, "member");
+            NodeList elmMembers = selectNodeList(elmAssociation,"member", "role");
             if (elmMembers.getLength() == 2) {
                 Element member1 = (Element)elmMembers.item(0);
                 Element member2 = (Element)elmMembers.item(1);
@@ -210,15 +245,15 @@ public class XTMImportWorker{
     }
 
     private void addRoleSpecToAssociation(Element memberElement,TopicAssociation association) throws TransformerException {
-        String roleSpec = getAttributeValue(memberElement, "xlink:href", "roleSpec/topicRef","roleSpec/subjectIndicatorRef");
+        String roleSpec = getAttributeValue(memberElement, ATTRIBUTE_HREF, "type/topicRef","roleSpec/subjectIndicatorRef");
         if (roleSpec != null ) {
-            roleSpec = removeLeadingSquare(roleSpec);
+            roleSpec = removeIdPrefix(roleSpec);
             association.setRolespec(new Topic(roleSpec));
         }
     }
 
     private void addIdToTopic(Element element, Topic topic) throws TransformerException {
-        String id = getAttributeValue(element,"xlink:href", "topicRef", "subjectIndicatorRef");
+        String id = getAttributeValue(element,ATTRIBUTE_HREF, "topicRef", "subjectIndicatorRef");
         if (id != null ) {
             id = removeLeadingSquare(id);
             id = removeIdPrefix(id);
@@ -232,7 +267,7 @@ public class XTMImportWorker{
             Configuration configuration = Aksess.getConfiguration();
             idPrefixArray = configuration.getString("topic.import.id.prefix").split(",");
             for(String prefix: idPrefixArray){
-                if(id.indexOf(prefix) >= 0){
+                if(id.indexOf(prefix) >= 0 && id.indexOf(prefix) < 1){
                     id = id.substring(id.indexOf(prefix)+ prefix.length(), id.length());
                 }
             }
@@ -242,6 +277,7 @@ public class XTMImportWorker{
         return id;
     }
 
+    @Deprecated
     private void addTopic (Element elmTopic) throws TransformerException, SystemException {
         Topic topic = new Topic();
         String id = elmTopic.getAttribute("id");
@@ -336,6 +372,7 @@ public class XTMImportWorker{
         }
     }
 
+    @Deprecated
     private void addAssociation(Element elmAssociation) throws TransformerException, SystemException {
         // Topics er knyttet begge veier, opprettes som to topic associations
         TopicAssociation association1 = new TopicAssociation();

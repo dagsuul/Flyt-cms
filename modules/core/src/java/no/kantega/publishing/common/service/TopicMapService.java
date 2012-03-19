@@ -17,6 +17,7 @@
 package no.kantega.publishing.common.service;
 
 import no.kantega.commons.exception.SystemException;
+import no.kantega.commons.log.Log;
 import no.kantega.commons.util.XMLHelper;
 import no.kantega.publishing.spring.RootContext;
 import no.kantega.publishing.topicmaps.ao.*;
@@ -30,14 +31,9 @@ import no.kantega.publishing.security.SecuritySession;
 import no.kantega.publishing.topicmaps.data.exception.ImportTopicMapException;
 import no.kantega.publishing.topicmaps.impl.XTMImportWorker;
 import org.w3c.dom.Document;
-import org.xml.sax.SAXException;
 
 import javax.servlet.http.HttpServletRequest;
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
-import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.transform.TransformerException;
-import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.List;
@@ -89,6 +85,18 @@ public class TopicMapService {
         try {
             topics = importWorker.getTopicsFromDocument(document);
             topicAssociations = importWorker.getTopicAssociationsFromDocument(document);
+            for(TopicAssociation topicAssociation: topicAssociations){
+                Topic topicRef = topicAssociation.getTopicRef();
+                Topic associatedTopicRef = topicAssociation.getAssociatedTopicRef();
+                for(Topic topic:topics){
+                    if(topic.getSubjectIdentity() != null && topic.getSubjectIdentity().equalsIgnoreCase(topicRef.getId())){
+                        topicAssociation.setTopicRef(topic);
+                    }
+                    if(topic.getSubjectIdentity() != null && topic.getSubjectIdentity().equalsIgnoreCase(associatedTopicRef.getId())){
+                        topicAssociation.setAssociatedTopicRef(topic);
+                    }
+                }
+            }
         } catch (TransformerException e) {
             throw new ImportTopicMapException("Error importing topic map from url:" + topicMap.getUrl() + ". Verify url and try again.", e);
         }
@@ -109,6 +117,7 @@ public class TopicMapService {
     }
 
     private void saveImportedAssociation(int topicMapId, TopicAssociation topicAssociation) {
+        Log.debug(this.getClass().getName(),"Saving imported assosication between " + topicAssociation.getTopicRef().getId() + " and " + topicAssociation.getAssociatedTopicRef().getId());
         topicAssociationDao.addTopicAssociation(topicAssociation);
         Topic instanceOf = topicAssociation.getInstanceOf();
         instanceOf.setBaseName("er relatert til");
@@ -130,20 +139,23 @@ public class TopicMapService {
     }
 
     private void saveImportedTopic(int topicMapId, Topic topic) {
+        Log.debug(this.getClass().getName(),"Saving imported topic: " + topic.getBaseName());
         for(TopicBaseName topicBaseName: topic.getBaseNames()){
             topicBaseName.setScope(topic.getInstanceOf().getId());
         }
         topicDao.setTopic(topic);
         Topic instanceOf = topic.getInstanceOf();
-        Topic savedInstanceOf = topicDao.getTopic(topicMapId, instanceOf.getId());
-        if(savedInstanceOf == null){
-            if(instanceOf.getBaseName() == null || instanceOf.getBaseName().isEmpty()){
-                instanceOf.setBaseName(instanceOf.getId());
+        if(instanceOf != null){
+            Topic savedInstanceOf = topicDao.getTopic(topicMapId, instanceOf.getId());
+            if(savedInstanceOf == null){
+                if(instanceOf.getBaseName() == null || instanceOf.getBaseName().isEmpty()){
+                    instanceOf.setBaseName(instanceOf.getId());
+                }
+                instanceOf.setImported(true);
+                instanceOf.setTopicMapId(topicMapId);
+                instanceOf.setIsTopicType(true);
+                topicDao.setTopic(instanceOf);
             }
-            instanceOf.setImported(true);
-            instanceOf.setTopicMapId(topicMapId);
-            instanceOf.setIsTopicType(true);
-            topicDao.setTopic(instanceOf);
         }
     }
 
