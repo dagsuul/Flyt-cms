@@ -80,7 +80,9 @@ public class EditContentAction implements Controller {
             // Content is not in session or not correct content
             content = aksessService.checkOutContent(cid);
 
-            if (content.getStatus() == ContentStatus.DRAFT && content.getVersion() > 1) {
+            if (content.getStatus() == ContentStatus.DRAFT && content.isAutoSaved()) {
+                infomessage = "editautosaved";
+            } else if (content.getStatus() == ContentStatus.DRAFT && content.getVersion() > 1) {
                 // Tell user this is a draft
                 infomessage = "editdraft";
             } else if (content.getStatus() == ContentStatus.WAITING_FOR_APPROVAL) {

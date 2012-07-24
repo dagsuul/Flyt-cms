@@ -52,6 +52,7 @@
         <js>/admin/js/date.js</js>
         <js>/admin/js/editcontext.js</js>
         <js>/admin/js/formeditor.js</js>
+        <js>/admin/js/jquery.form.js</js>
     </group>
 
     <group name="admin-contentnavigatelayout">
@@ -66,6 +67,7 @@
         <css>/admin/css/miniaksess.css</css>
         <js>/admin/js/common.js</js>
         <js>/admin/js/editcontext.js</js>
+        <js>/admin/js/jquery.form.js</js>
     </group>
 
     <group name="admin-mypage">

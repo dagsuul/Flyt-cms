@@ -90,13 +90,18 @@ public class FormTag extends BodyTagSupport {
                 }
 
                 if (currentEditContent.getStatus() == ContentStatus.DRAFT) {
-                    out.write("<div class=\"ui-state-highlight\">"+ LocaleLabels.getLabel("aksess.simpleedit.editdraft", locale)+"</div>");
+                    if (currentEditContent.isAutoSaved()) {
+                        out.write("<div class=\"ui-state-highlight\">"+ LocaleLabels.getLabel("aksess.simpleedit.editautosaved", locale)+"</div>");
+                    } else {
+                        out.write("<div class=\"ui-state-highlight\">"+ LocaleLabels.getLabel("aksess.simpleedit.editdraft", locale)+"</div>");
+                    }
+
                 }
             }
 
             out.write("<form name=\"myform\" id=\"EditContentForm\" action=\"" + action + "\" method=\"post\" enctype=\"multipart/form-data\">");
             out.write("    <input type=\"hidden\" id=\"ContentStatus\" name=\"status\" value=\"" + contentStatus + "\">");
-            out.write("    <input type=\"hidden\" name=\"currentId\" value=\"" + currentEditContent.getId() + "\">");
+            out.write("    <input type=\"hidden\" id=\"CurrentContentId\" name=\"currentId\" value=\"" + currentEditContent.getId() + "\">");
             out.write("    <input type=\"hidden\" id=\"ContentIsModified\" name=\"isModified\" value=\"true\">");
             out.write("    <input type=\"hidden\" id=\"AddRepeaterRow\" name=\"addRepeaterRow\" value=\"\">");
             out.write("    <input type=\"hidden\" id=\"DeleteRepeaterRow\" name=\"deleteRepeaterRow\" value=\"\">");

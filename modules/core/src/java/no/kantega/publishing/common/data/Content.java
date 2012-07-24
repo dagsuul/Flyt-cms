@@ -117,6 +117,8 @@ public class Content extends BaseObject {
     boolean isSearchable = true;
     boolean isMinorChange = false;
 
+    boolean isAutoSaved = false;
+
     private Date lastMajorChange;
     private String lastMajorChangeBy;
     
@@ -886,5 +888,13 @@ public class Content extends BaseObject {
 
     public void setAttributesAreUpdatedFromTemplate(boolean attributesAreUpdatedFromTemplate) {
         this.attributesAreUpdatedFromTemplate = attributesAreUpdatedFromTemplate;
+    }
+
+    public boolean isAutoSaved() {
+        return isAutoSaved;
+    }
+
+    public void setAutoSaved(boolean autoSaved) {
+        isAutoSaved = autoSaved;
     }
 }

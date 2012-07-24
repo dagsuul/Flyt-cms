@@ -135,6 +135,7 @@
             <index-column name="Version"/>
             <index-column name="Status"/>
         </index>
+        <column name="AutoSaved" required="true" type="INTEGER" size="10" default="0"/>
     </table>
     <table name="ct2topic">
         <column name="ContentId" required="true" type="INTEGER" size="10"/>

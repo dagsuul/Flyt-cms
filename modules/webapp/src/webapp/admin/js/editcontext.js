@@ -86,6 +86,8 @@ openaksess.editcontext = function()  {
         editIsModified : false,
         doInsertTag : false,
         doInsertUrl : false,
+        autoSaveInterval : -1,
+        isAutoSaving: false,
 
         setIsModified : function() {
             openaksess.editcontext.editIsModified = true;
@@ -100,6 +102,53 @@ openaksess.editcontext = function()  {
             }
         },
 
+        autoSave : function() {
+            alert("autosave");
+            if (openaksess.editcontext.isModified()) {
+                alert("nochangesautosave");
+                var $fileInputs = $("#EditContentForm input[type=file]");
+
+                // We don't submit files for two reasons: to increase speed and to prevent problems with duplicate files
+                $fileInputs.attr("disabled", "disabled");
+
+                openaksess.editcontext.saveAll();
+                openaksess.editcontext.isAutoSaving = true;
+
+                $("#AutoSaveStatus").html(properties.editcontext.labels.autosaving);
+
+                var options = {
+                    url: properties.contextPath + '/admin/publish/AutoSaveContent.action',
+                    dataType: 'json',
+                    success: function(data) {
+                        $("#CurrentContentId").val(data.contentId);
+                        $fileInputs.removeAttr("disabled", "disabled");
+                        openaksess.editcontext.isAutoSaving = false;
+                        var d = new Date();
+                        var status = properties.editcontext.labels.autosavedAt.status + " ";
+                        if (d.getHours() < 10) {
+                            status += "0";
+                        }
+                        status += d.getHours();
+                        status += ":";
+                        if (d.getMinutes() < 10) {
+                            status += "0";
+                        }
+                        status += d.getMinutes();
+                        $("#AutoSaveStatus").html(status);
+                    },
+                    error : function() {
+                        $fileInputs.removeAttr("disabled", "disabled");
+                        openaksess.editcontext.isAutoSaving = false;
+                        $("#AutoSaveStatus").html(properties.editcontext.labels.autosavingFailed);
+                    }
+                };
+
+                $("#EditContentForm").ajaxSubmit(options);
+            }
+
+            window.setTimeout(openaksess.editcontext.autoSave, openaksess.editcontext.autoSaveInterval);
+        },
+
         isModified : function () {
             return openaksess.editcontext.editIsModified || (typeof tinyMCE != "undefined" && tinyMCE.activeEditor && tinyMCE.activeEditor.isDirty());
         },
@@ -108,6 +157,13 @@ openaksess.editcontext = function()  {
         bindFieldChangeListeners : function () {
             openaksess.common.debug("bindFieldChangeListeners");
             $("#EditContentForm :input").change(openaksess.editcontext.setIsModified);
+        },
+
+        enableAutoSave : function (mins) {
+            openaksess.common.debug("EnableAutosave");
+            //openaksess.editcontext.autoSaveInterval = mins * 1000 * 60;
+            openaksess.editcontext.autoSaveInterval = 20000;
+            window.setTimeout(openaksess.editcontext.autoSave, openaksess.editcontext.autoSaveInterval);
         },
 
 

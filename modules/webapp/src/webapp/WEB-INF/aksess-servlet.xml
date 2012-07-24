@@ -111,6 +111,7 @@
                 <prop key="/admin/publish/SaveContentPreview.action">SaveContentPreviewAction</prop>
                 <prop key="/admin/publish/ViewContentPreviewFrame.action">ViewContentPreviewFrameAction</prop>
                 <prop key="/admin/publish/SaveAttachments.action">SaveAttachmentsAction</prop>
+                <prop key="/admin/publish/AutoSaveContent.action">AutoSaveContentAction</prop>
                 <prop key="/admin/publish/SaveContent.action">SaveContentAction</prop>
                 <prop key="/admin/publish/SaveMetadata.action">SaveMetadataAction</prop>
                 <prop key="/admin/publish/SaveVersion.action">SaveVersionAction</prop>
@@ -493,6 +494,10 @@
     <bean class="no.kantega.publishing.admin.content.action.SaveAttachmentsAction" id="SaveAttachmentsAction">
         <property name="view" value="/WEB-INF/jsp/admin/publish/editattachments.jsp"/>
     </bean>
+
+    <bean class="no.kantega.publishing.admin.content.action.AutoSaveContentAction" id="AutoSaveContentAction">
+        <property name="view" ref="aksessJsonView"/>
+    </bean>
     <bean class="no.kantega.publishing.admin.content.action.SaveContentAction" id="SaveContentAction">
         <property name="view" value="/WEB-INF/jsp/admin/publish/editcontent.jsp"/>
     </bean>
@@ -770,10 +775,6 @@
         <property name="pluginManager" ref="pluginManager"/>
         <property name="prefix" value="no/kantega/openaksess/admin/static/"/>
     </bean>
-
-
-
-
 
     <bean id="velocityViewResolver" class="no.kantega.publishing.spring.ChainableVelocityViewResolver">
         <property name="viewClass" value="no.kantega.publishing.spring.CustomVelocityView"/>

@@ -26,6 +26,12 @@
 </kantega:section>
 
 <kantega:section id="content">
+    <script type="text/javascript">
+        $(document).ready(function() {
+            openaksess.editcontext.enableAutoSave(10);
+        });
+    </script>
+
 <%
     InputScreenRenderer screen = new InputScreenRenderer(pageContext, (Content)session.getAttribute("currentContent"), AttributeDataType.CONTENT_DATA);
 %>

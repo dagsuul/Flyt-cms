@@ -266,6 +266,39 @@ public class ContentManagementService {
 
 
     /**
+     * Lagrer et innholdsobjekt med en gitt status og fjerner lås
+     * Legger til objektet i søkeindeks dersom status = Publish
+     * @param content - Endret objekt
+     * @param newStatus - Status som skal settes på nytt objekt
+     * @return
+     * @throws SystemException
+     * @throws NotAuthorizedException
+     */
+
+    public Content checkInContent(Content content, int newStatus) throws SystemException, NotAuthorizedException {
+        LockManager.releaseLock(content.getId());
+        content.setAutoSaved(false);
+
+        return saveContent(content, newStatus);
+    }
+
+
+    /**
+     * Lagrer et innholdsobjekt som kladd uten å fjerne lås
+     * Legger til objektet i søkeindeks dersom status = Publish
+     * @param content - Endret objekt
+     * @return
+     * @throws SystemException
+     * @throws NotAuthorizedException
+     */
+
+    public Content autoSaveContent(Content content) throws SystemException, NotAuthorizedException {
+        content.setAutoSaved(true);
+
+        return saveContent(content, ContentStatus.DRAFT);
+    }
+
+    /**
      * Lagrer et innholdsobjekt med en gitt status. Oppretter i gitte tilfeller en ny versjon.
      * Legger til objektet i søkeindeks dersom status = Publish
      * @param content - Endret objekt
@@ -274,8 +307,9 @@ public class ContentManagementService {
      * @throws SystemException
      * @throws NotAuthorizedException
      */
-    public Content checkInContent(Content content, int newStatus) throws SystemException, NotAuthorizedException {
-        LockManager.releaseLock(content.getId());
+
+    public Content saveContent(Content content, int newStatus) throws SystemException, NotAuthorizedException {
+
         boolean hasBeenPublished = ContentAO.hasBeenPublished(content.getId());
 
         if (!securitySession.isAuthorized(content, Privilege.UPDATE_CONTENT)) {
@@ -396,6 +430,8 @@ public class ContentManagementService {
 
         return c;
     }
+
+
 
 
     /**

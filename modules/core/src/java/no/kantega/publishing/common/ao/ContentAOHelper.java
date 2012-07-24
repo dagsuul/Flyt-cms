@@ -106,8 +106,11 @@ public class ContentAOHelper {
         content.setChangeFromDate(rs.getTimestamp("ChangeFrom"));
 
         content.setMinorChange(rs.getInt("IsMinorChange") == 1);
+
         content.setLastMajorChange(rs.getTimestamp("LastMajorChange"));
         content.setLastMajorChangeBy(rs.getString("LastMajorChangeBy"));
+
+        content.setAutoSaved(rs.getInt("AutoSaved") == 1);
 
         // Info som avhenger av i hvilken kontekst dette er publisert
         if (getAssociationInfo) {

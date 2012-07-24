@@ -83,6 +83,9 @@
         function saveContent(status) {
             openaksess.common.debug("publishLayout.saveContent(): status: " + status);
 
+            if (openaksess.editcontext.isAutoSaving) {
+                return;
+            }
 
             if (validatePublishProperties()) {
                 if (!hasSubmitted) {
@@ -129,6 +132,7 @@
         <a href="#" class="tab<c:if test="${metadataActive}"> active</c:if>"><span><span class="metadata"><kantega:label key="aksess.tools.metadata"/></span></span></a>
         <a href="#" class="tab<c:if test="${attachmentsActive}"> active</c:if>"><span><span class="attachments"><kantega:label key="aksess.tools.attachments"/></span></span></a>
         <a href="#" class="tab<c:if test="${versionsActive}"> active</c:if>"><span><span class="versions"><kantega:label key="aksess.tools.versions"/></span></span></a>
+        <span id="AutoSaveStatus"></span>
     </div>
 </kantega:section>
 
@@ -156,7 +160,7 @@
         <input type="hidden" name="action" value="">
         <input type="hidden" id="AddRepeaterRow" name="addRepeaterRow" value="">
         <input type="hidden" id="DeleteRepeaterRow" name="deleteRepeaterRow" value="">
-        <input type="hidden" name="currentId" value="${currentContent.id}">
+        <input type="hidden" name="currentId" id="CurrentContentId" value="${currentContent.id}">
         <input type="hidden" id="ContentIsModified" name="isModified" value="${currentContent.modified}">
     </form>
 

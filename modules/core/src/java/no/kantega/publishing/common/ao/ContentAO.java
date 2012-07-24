@@ -1057,7 +1057,7 @@ public class ContentAO {
 
     private static void addContentVersion(Connection c, Content content, int newStatus, boolean activeVersion) throws SQLException {
         // Insert new version
-        PreparedStatement contentVersionSt = c.prepareStatement("insert into contentversion (ContentId, Version, Status, IsActive, Language, Title, AltTitle, Description, Image, Keywords, Publisher, LastModified, LastModifiedBy, ChangeDescription, ApprovedBy, ChangeFrom, IsMinorChange, LastMajorChange, LastMajorChangeBy) values (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)", Statement.RETURN_GENERATED_KEYS);
+        PreparedStatement contentVersionSt = c.prepareStatement("insert into contentversion (ContentId, Version, Status, IsActive, Language, Title, AltTitle, Description, Image, Keywords, Publisher, LastModified, LastModifiedBy, ChangeDescription, ApprovedBy, ChangeFrom, IsMinorChange, LastMajorChange, LastMajorChangeBy, AutoSaved) values (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)", Statement.RETURN_GENERATED_KEYS);
         contentVersionSt.setInt(1, content.getId());
         contentVersionSt.setInt(2, content.getVersion());
         contentVersionSt.setInt(3, newStatus);
@@ -1077,6 +1077,7 @@ public class ContentAO {
         contentVersionSt.setInt(17, content.isMinorChange() ? 1 : 0);
         contentVersionSt.setTimestamp(18, content.getLastMajorChange() == null ? new Timestamp(new Date().getTime()) : new Timestamp(content.getLastMajorChange().getTime()));
         contentVersionSt.setString(19, content.getLastMajorChangeBy());
+        contentVersionSt.setInt(20, content.isAutoSaved() ? 1 : 0);
 
         contentVersionSt.execute();
 
