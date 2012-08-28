@@ -48,11 +48,7 @@ public class Paginator {
 
         boolean gapWasAdded = false;
         for (int pageNo = 1; pageNo <= numberOfPages; pageNo++) {
-            if (pageNo == 1 || pageNo == numberOfPages) {
-                PaginatePage page = PaginatePage.createPage(pageNo, currentOffset == (pageNo - 1));
-                pages.add(page);
-                gapWasAdded = false;
-            } else if (pageNo >= currentPageNo - pagesBeforeCurrent && pageNo <= currentPageNo + pagesAfterCurrent ) {
+            if ((pageNo == 1 || pageNo == numberOfPages) || (pageNo >= currentPageNo - pagesBeforeCurrent && pageNo <= currentPageNo + pagesAfterCurrent ) ) {
                 PaginatePage page = PaginatePage.createPage(pageNo, currentOffset == (pageNo - 1));
                 pages.add(page);
                 gapWasAdded = false;

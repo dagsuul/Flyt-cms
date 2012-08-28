@@ -94,7 +94,7 @@
             user.setValue("");
             request.setAttribute("attribute", user);
             request.setAttribute("fieldName", "ownerperson");
-            pageContext.include("/admin/publish/attributes/" +user.getRenderer() + ".jsp");
+            pageContext.include("/admin/publish/attributes/" + user.getRenderer() + ".jsp");
         %>
     </div>
     <div class="contentAttribute">
@@ -105,7 +105,7 @@
             orgunit.setValue("");
             request.setAttribute("attribute", orgunit);
             request.setAttribute("fieldName", "owner");
-            pageContext.include("/admin/publish/attributes/" +orgunit.getRenderer() + ".jsp");
+            pageContext.include("/admin/publish/attributes/" + orgunit.getRenderer() + ".jsp");
         %>
     </div>
     <div class="contentAttribute">

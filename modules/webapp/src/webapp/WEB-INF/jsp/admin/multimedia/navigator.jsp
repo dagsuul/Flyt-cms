@@ -14,8 +14,21 @@
 ~ limitations under the License.
 --%>
 <%@ page contentType="text/html;charset=utf-8" language="java" pageEncoding="utf-8" %>
-<%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core"%>
 <%@ taglib prefix="admin" uri="http://www.kantega.no/aksess/tags/admin"%>
+<script type="text/javascript">
+    function allowDrop(ev){
+        ev.preventDefault();
+    }
+    function drag(ev){
+        ev.dataTransfer.setData("Text",ev.target.id);
+    }
+
+    function drop(ev){
+        ev.preventDefault();
+        var data=ev.dataTransfer.getData("Text");
+        ev.target.appendChild(document.getElementById(data));
+    }
+</script>
 
 <admin:printmultimedianavigator root="${mediaArchiveRoot}" currentId="${itemIdentifier}"/>
 

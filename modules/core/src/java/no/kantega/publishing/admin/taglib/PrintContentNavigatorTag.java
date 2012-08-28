@@ -80,5 +80,8 @@ public class PrintContentNavigatorTag extends PrintNavigatorTag {
             out.write("<span class=\"notes\"><a href=\"" + href + "\" title=\"" + + currentItem.getNumberOfNotes() + " " + notesTxt + "\"></a></span>");
         }
     }
+    protected String printListElementAttributes(StringBuilder clz, NavigationMapEntry item){
+        return " class=\"" + clz.toString() + "\"";
+    }
 
 }
