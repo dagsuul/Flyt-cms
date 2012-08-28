@@ -64,10 +64,14 @@ public class PrintMultimediaNavigatorTag  extends PrintNavigatorTag {
     }
     protected String printListElementAttributes(StringBuilder clz, NavigationMapEntry item){
         MultimediaMapEntry currentItem = (MultimediaMapEntry)item;
-        if(currentItem.getType() == MultimediaType.FOLDER){
+        if(currentItem.getType() == MultimediaType.FOLDER && !clz.toString().isEmpty()){
             return " class=\"" + clz.toString() + "\" ondrop=\"drop(event)\" ondragover=\"allowDrop(event)\" ondragleave=\"dragLeave(event)\" ";
-        }else if(currentItem.getType() == MultimediaType.MEDIA){
+        }else if(currentItem.getType() == MultimediaType.MEDIA && !clz.toString().isEmpty()){
             return " class=\"" + clz.toString() + "\" draggable=\"true\" ";
+        }if(currentItem.getType() == MultimediaType.FOLDER){
+            return " ondrop=\"drop(event)\" ondragover=\"allowDrop(event)\" ondragleave=\"dragLeave(event)\" ";
+        }else if(currentItem.getType() == MultimediaType.MEDIA){
+            return " draggable=\"true\" ";
         }
         return "";
     }
