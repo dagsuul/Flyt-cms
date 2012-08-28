@@ -18,15 +18,15 @@
 <script type="text/javascript">
     function allowDrop(ev){
         ev.preventDefault();
+        ev.target.setAttribute("style", "background-color: #5CB6E1; color: #FFFFFF; font-weight: bold");
     }
-    function drag(ev){
-        ev.dataTransfer.setData("Text",ev.target.id);
-    }
-
     function drop(ev){
         ev.preventDefault();
-        var data=ev.dataTransfer.getData("Text");
         ev.target.appendChild(document.getElementById(data));
+    }
+    function dragLeave(ev){
+        ev.preventDefault();
+        ev.target.removeAttribute("style");
     }
 </script>
 
