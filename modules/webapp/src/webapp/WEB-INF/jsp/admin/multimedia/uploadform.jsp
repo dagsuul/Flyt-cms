@@ -25,7 +25,6 @@
 
 <kantega:section id="body">
 
-
     <script type="text/javascript">
         function selectMultimedia() {
             openaksess.editcontext.doInsertTag = false;
@@ -84,7 +83,6 @@
         }
 
         function displayMetadata() {
-            $(".uploadMetadata").show();
             $("#UploadFormButtons").show();
         }
 
@@ -111,6 +109,13 @@
 
         $(document).ready(function() {
             $("#MultimediaAddToArchive").click(toggleSelectMediaFolder);
+            $('#File').change(function(event){
+                var files = $("File")[0].files;
+                for(var i = 0; i < files.length; i++){
+                    alert(files[i].name);
+                }
+                displayMetadata();
+            })
         });
 
     </script>
@@ -127,13 +132,12 @@
                     <label><kantega:label key="aksess.multimedia.uploadfile"/></label>
                 </div>
                 <div class="inputs">
-                    <input type="file" class="fullWidth" id="File" name="file" value="" size="45" onchange="displayMetadata()" <c:if test="${id == -1}">multiple</c:if>>
+                    <input type="file" class="fullWidth" id="File" name="file" value="" size="45" <c:if test="${id == -1}">multiple</c:if>>
                     <c:if test="${allowPreserveImageSize}">
                         <div>
                             <input type="checkbox" id="PreserveImageSize" name="preserveImageSize" value="true"><label for="PreserveImageSize"><kantega:label key="aksess.multimedia.preserveimagesize"/></label>
                         </div>
                     </c:if>
-
                     <c:if test="${id == -1 && fileUploadedFromEditor}">
                         <div class="uploadMetadata hidden">
                             <input type="checkbox" name="multimediaAddToArchive" id="MultimediaAddToArchive" value="true"><label for="MultimediaAddToArchive"><kantega:label key="aksess.multimedia.addtoarchive"/></label>
