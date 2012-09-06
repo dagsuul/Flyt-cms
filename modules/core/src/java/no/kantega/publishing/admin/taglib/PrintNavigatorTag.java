@@ -60,7 +60,6 @@ public abstract class PrintNavigatorTag extends SimpleTagSupport {
      * @throws IOException
      */
     protected abstract void printBody(NavigationMapEntry item) throws IOException;
-    protected abstract String printListElementAttributes(StringBuilder clz, NavigationMapEntry item);
 
     public void setCurrentId(int currentId) {
         this.currentId = currentId;
@@ -176,7 +175,9 @@ public abstract class PrintNavigatorTag extends SimpleTagSupport {
         }
 
         out.write("\t<li");
-        out.write(printListElementAttributes(clz, currentItem));
+        if (clz.length() > 0) {
+            out.write(" class=\"" + clz.toString() + "\"");
+        }
         out.write(">\n");
 
         printBody(currentItem);
