@@ -53,7 +53,6 @@
                 document.editmediaform.submit();
             }
         }
-
         $(document).ready(function() {
             $("#MultimediaName").focus();
             if (openaksess.common.isPopup()) {
@@ -84,6 +83,13 @@
                 document.editmediaform.insert.value = false;
                 document.editmediaform.changed.value = true;
                 saveForm();
+                var loc = window.location + '';
+                var last = loc.substring(loc.lastIndexOf('&'));
+                var url = loc.substring(loc.indexOf('&')+1).substring(0, loc.lastIndexOf('&'));
+                if(last != null){
+                    this.preventDefault();
+                    window.open('${pageContext.request.contextPath}/admin/multimedia/EditMultimedia.action?id='+last+url);
+                }
             });
             </c:if>
 
