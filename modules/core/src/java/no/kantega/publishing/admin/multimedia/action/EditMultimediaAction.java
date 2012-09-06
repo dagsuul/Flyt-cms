@@ -92,12 +92,20 @@ public class EditMultimediaAction extends AbstractEditMultimediaAction {
 
             mm.setId(mediaService.setMultimedia(mm));
         }
-
         Map<String, Object> model = new HashMap<String, Object>();
         if (insert) {
             model.put("media", mm);
             model.put("maxWidth", param.getInt("maxWidth"));
             return new ModelAndView(selectMediaView, model);
+        } else if(param.getInts("ids") != null){
+            List<Integer> ids = new ArrayList<Integer>();
+            for(int i = 0; i < param.getInts("ids").length; i++){
+                ids.add(param.getInts("ids")[i]);
+            }
+            int id = ids.remove(0);
+            model.put("id", mm.getParentId());
+            model.put("ids", ids);
+            return new ModelAndView(new RedirectView("EditMultimedia.action?id="+id), model);
         } else {
             model.put("id", mm.getParentId());
             return new ModelAndView(new RedirectView("Navigate.action"), model);

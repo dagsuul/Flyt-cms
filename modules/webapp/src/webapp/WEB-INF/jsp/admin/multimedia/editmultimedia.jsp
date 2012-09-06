@@ -24,7 +24,7 @@
 
 <kantega:section id="editbuttons">
     <span class="barButton hidden"><input type="submit" class="insert" value="<kantega:label key="aksess.button.insert"/>"></span>
-    <span class="barButton"><input type="submit" class="save" value="<kantega:label key="aksess.button.save"/>"></span>
+    <span class="barButton"><input type="submit" class="save" onclick="$(this).closest('form').submit();" value="<kantega:label key="aksess.button.save"/>"></span>
     <span class="barButton"><input type="submit" class="cancel" value="<kantega:label key="aksess.button.cancel"/>"></span>
 </kantega:section>
 
@@ -50,6 +50,18 @@
 
             if (!hasSubmitted) {
                 hasSubmitted = true;
+                var prmstr = window.location.search.substr(1);
+                var prmarr = prmstr.split ("&");
+                var params = {};
+
+                var form = $(document.editmediaform);
+                for ( var i = 0; i < prmarr.length; i++) {
+                    var tmparr = prmarr[i].split("=");
+                    var name = tmparr[0];
+                    if(name == 'ids'){
+                        form.append('<input type="hidden" name="ids" value="' + tmparr[1] +'" />');
+                    }
+                }
                 document.editmediaform.submit();
             }
         }
@@ -83,13 +95,6 @@
                 document.editmediaform.insert.value = false;
                 document.editmediaform.changed.value = true;
                 saveForm();
-                var loc = window.location + '';
-                var last = loc.substring(loc.lastIndexOf('&'));
-                var url = loc.substring(loc.indexOf('&')+1).substring(0, loc.lastIndexOf('&'));
-                if(last != null){
-                    this.preventDefault();
-                    window.open('${pageContext.request.contextPath}/admin/multimedia/EditMultimedia.action?id='+last+url);
-                }
             });
             </c:if>
 
