@@ -294,8 +294,19 @@ public class ContentManagementService {
 
     public Content autoSaveContent(Content content) throws SystemException, NotAuthorizedException {
         content.setAutoSaved(true);
+        if (content.isNew()) {
+            // New pages should be deleted on auto save
+            content.setDeleteAutosavedVersionOnCancelEdit(true);
+        } else if (content.getStatus() != ContentStatus.DRAFT) {
+            // Existing version should be deleted on cancel unless it already is a draft
+            content.setDeleteAutosavedVersionOnCancelEdit(true);
+        }
 
-        return saveContent(content, ContentStatus.DRAFT);
+        Content savedContent = saveContent(content, ContentStatus.DRAFT);
+        savedContent.setDeleteAutosavedVersionOnCancelEdit(content.shouldDeleteAutosavedVersionOnCancelEdit());
+        savedContent.setAutoSaved(content.isAutoSaved());
+
+        return savedContent;
     }
 
     /**

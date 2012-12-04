@@ -143,7 +143,11 @@ public class ContentPropertiesAction implements Controller {
 
                 // Content hints for publisher
                 if (content.getStatus() == ContentStatus.DRAFT) {
-                    model.put("contentHints", LocaleLabels.getLabel("aksess.navigator.hints.draft", Aksess.getDefaultAdminLocale()));
+                    if (content.isAutoSaved()) {
+                        model.put("contentHints", LocaleLabels.getLabel("aksess.navigator.hints.autosaveddraft", Aksess.getDefaultAdminLocale()));
+                    } else {
+                        model.put("contentHints", LocaleLabels.getLabel("aksess.navigator.hints.draft", Aksess.getDefaultAdminLocale()));
+                    }
                 } else if (content.getChangeFromDate() != null) {
                     model.put("contentHints", LocaleLabels.getLabel("aksess.navigator.hints.changefromdate", Aksess.getDefaultAdminLocale()));
                 }                

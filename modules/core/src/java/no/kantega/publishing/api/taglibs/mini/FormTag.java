@@ -16,12 +16,14 @@
 
 package no.kantega.publishing.api.taglibs.mini;
 
+import no.kantega.commons.exception.ConfigurationException;
 import no.kantega.commons.log.Log;
 import no.kantega.commons.util.LocaleLabels;
 import no.kantega.publishing.admin.AdminSessionAttributes;
 import no.kantega.publishing.common.Aksess;
 import no.kantega.publishing.common.data.Content;
 import no.kantega.publishing.common.data.enums.ContentStatus;
+import no.kantega.publishing.search.model.AksessSearchHit;
 import no.kantega.publishing.security.SecuritySession;
 import no.kantega.publishing.security.data.enums.Privilege;
 
@@ -73,15 +75,24 @@ public class FormTag extends BodyTagSupport {
             //TODO: Improvement: Use the page's language if this is one of Aksess' supported admin languages.
             Locale locale = Aksess.getDefaultAdminLocale();
 
+            int autoSaveInterval = Aksess.getConfiguration().getInt("autosave.miniaksess.interval", -1);
+
             out.write("<script type=\"text/javascript\">\n");
             out.write("var hasSubmitted = false;\n");
             out.write("function saveContent(status) {\n");
             out.write("   if (!hasSubmitted) {\n");
-            out.write("      hasSubmitted=true;\n");
-            out.write("      document.myform.status.value=status;\n");
-            out.write("      document.myform.submit();\n");
+            out.write("       if (openaksess.editcontext.isAutoSaving) {\n");
+            out.write("           setTimeout(function() {\n");
+            out.write("               saveContent(status);\n");
+            out.write("           }, 1000);");
+            out.write("           return;\n");
+            out.write("       }");
+            out.write("       hasSubmitted=true;\n");
+            out.write("       document.myform.status.value=status;\n");
+            out.write("       document.myform.submit();\n");
             out.write("   }\n");
             out.write("}\n");
+            out.write("openaksess.editcontext.enableAutoSave(" + autoSaveInterval + ");");
             out.write("</script>\n");
 
             if (!hideInfoMessages) {
@@ -133,10 +144,14 @@ public class FormTag extends BodyTagSupport {
             out.write("    <input class=\"editContentButton cancel\" type=\"button\" value=\""+LocaleLabels.getLabel("aksess.button.cancel", locale)+"\" onclick=\"window.location.href ='"+cancelAction+"'\">");
             out.write("</form>");
 
+            out.write("<div id=\"AutoSaveStatus\" style=\"display:none\" class=\"ui-state-highlight\"></div>");
+
             allowDraft = false;
 
         } catch (IOException e) {
-            Log.error(this.getClass().getName(), e, null, null);
+            Log.error(this.getClass().getName(), e);
+        } catch (ConfigurationException e) {
+            Log.error(this.getClass().getName(), e);
         }
 
         return SKIP_BODY;

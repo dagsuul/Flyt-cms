@@ -118,6 +118,7 @@ public class Content extends BaseObject {
     boolean isMinorChange = false;
 
     boolean isAutoSaved = false;
+    boolean deleteAutosavedVersionOnCancelEdit = false;
 
     private Date lastMajorChange;
     private String lastMajorChangeBy;
@@ -896,5 +897,13 @@ public class Content extends BaseObject {
 
     public void setAutoSaved(boolean autoSaved) {
         isAutoSaved = autoSaved;
+    }
+
+    public boolean shouldDeleteAutosavedVersionOnCancelEdit() {
+        return deleteAutosavedVersionOnCancelEdit;
+    }
+
+    public void setDeleteAutosavedVersionOnCancelEdit(boolean deleteAutosavedVersionOnCancelEdit) {
+        this.deleteAutosavedVersionOnCancelEdit = deleteAutosavedVersionOnCancelEdit;
     }
 }

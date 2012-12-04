@@ -25,8 +25,8 @@ properties.editcontext['labels'] = {
     hearing : '<kantega:label key="aksess.hearing.title" escapeJavascript="true"/>',
     addrole : '<kantega:label key="aksess.addrole.title" escapeJavascript="true"/>',
     editablelistValue : '<kantega:label key="aksess.editablelist.value" escapeJavascript="true"/>',
+    autosavedAt : '<kantega:label key="aksess.autosave.saved" escapeJavascript="true"/>',
     autosaving : '<kantega:label key="aksess.autosave.inprogress" escapeJavascript="true"/>',
-    autosavingAt : '<kantega:label key="aksess.autosave.saved" escapeJavascript="true"/>',
     autosavingFailed : '<kantega:label key="aksess.autosave.failed" escapeJavascript="true"/>'
 };
 

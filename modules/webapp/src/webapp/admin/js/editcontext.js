@@ -103,9 +103,9 @@ openaksess.editcontext = function()  {
         },
 
         autoSave : function() {
-            alert("autosave");
             if (openaksess.editcontext.isModified()) {
-                alert("nochangesautosave");
+                openaksess.common.debug("autoSave: Saving");
+
                 var $fileInputs = $("#EditContentForm input[type=file]");
 
                 // We don't submit files for two reasons: to increase speed and to prevent problems with duplicate files
@@ -115,16 +115,19 @@ openaksess.editcontext = function()  {
                 openaksess.editcontext.isAutoSaving = true;
 
                 $("#AutoSaveStatus").html(properties.editcontext.labels.autosaving);
+                $("#AutoSaveStatus").show();
+
 
                 var options = {
                     url: properties.contextPath + '/admin/publish/AutoSaveContent.action',
                     dataType: 'json',
                     success: function(data) {
+                        openaksess.common.debug("autoSave: Save OK");
                         $("#CurrentContentId").val(data.contentId);
                         $fileInputs.removeAttr("disabled", "disabled");
                         openaksess.editcontext.isAutoSaving = false;
                         var d = new Date();
-                        var status = properties.editcontext.labels.autosavedAt.status + " ";
+                        var status = properties.editcontext.labels.autosavedAt + " ";
                         if (d.getHours() < 10) {
                             status += "0";
                         }
@@ -139,11 +142,14 @@ openaksess.editcontext = function()  {
                     error : function() {
                         $fileInputs.removeAttr("disabled", "disabled");
                         openaksess.editcontext.isAutoSaving = false;
-                        $("#AutoSaveStatus").html(properties.editcontext.labels.autosavingFailed);
+                        $("#AutoSaveStatus").hide();
+                        alert(properties.editcontext.labels.autosavingFailed);
                     }
                 };
 
                 $("#EditContentForm").ajaxSubmit(options);
+            } else {
+                openaksess.common.debug("autoSave: No changes");
             }
 
             window.setTimeout(openaksess.editcontext.autoSave, openaksess.editcontext.autoSaveInterval);
@@ -160,10 +166,14 @@ openaksess.editcontext = function()  {
         },
 
         enableAutoSave : function (mins) {
-            openaksess.common.debug("EnableAutosave");
-            //openaksess.editcontext.autoSaveInterval = mins * 1000 * 60;
-            openaksess.editcontext.autoSaveInterval = 20000;
-            window.setTimeout(openaksess.editcontext.autoSave, openaksess.editcontext.autoSaveInterval);
+            if (mins > 0) {
+                openaksess.common.debug("enableAutoSave: autoSaveInterval set to: " + mins);
+                openaksess.editcontext.autoSaveInterval = 20000;
+                //openaksess.editcontext.autoSaveInterval = mins * 1000 * 60;
+                window.setTimeout(openaksess.editcontext.autoSave, openaksess.editcontext.autoSaveInterval);
+            } else {
+                openaksess.common.debug("enableAutoSave: Autosave disabled");
+            }
         },
 
 

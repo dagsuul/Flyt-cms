@@ -38,3 +38,4 @@
     </span>
 </c:if>
 
+<div id="AutoSaveStatus"></div>

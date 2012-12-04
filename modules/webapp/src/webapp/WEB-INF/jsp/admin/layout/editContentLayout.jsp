@@ -31,7 +31,7 @@
     <script type="text/javascript" src="${pageContext.request.contextPath}/aksess/js/aksess-i18n.jjs"></script>
     <script type="text/javascript" src="<kantega:expireurl url="/wro-oa/admin-editcontentlayout.js"/>"></script>
     <script type="text/javascript" src="${pageContext.request.contextPath}/aksess/tiny_mce/tiny_mce_gzip.js"></script>
-
+    <script type="text/javascript" src="${pageContext.request.contextPath}/admin/js/jquery.form.js"></script>
     <%@include file="fragments/publishModesAndButtonsJS.jsp"%>
 
     <script type="text/javascript">
@@ -84,6 +84,9 @@
             openaksess.common.debug("publishLayout.saveContent(): status: " + status);
 
             if (openaksess.editcontext.isAutoSaving) {
+                setTimeout(function() {
+                    saveContent(status);
+                }, 1000);
                 return;
             }
 
@@ -132,7 +135,6 @@
         <a href="#" class="tab<c:if test="${metadataActive}"> active</c:if>"><span><span class="metadata"><kantega:label key="aksess.tools.metadata"/></span></span></a>
         <a href="#" class="tab<c:if test="${attachmentsActive}"> active</c:if>"><span><span class="attachments"><kantega:label key="aksess.tools.attachments"/></span></span></a>
         <a href="#" class="tab<c:if test="${versionsActive}"> active</c:if>"><span><span class="versions"><kantega:label key="aksess.tools.versions"/></span></span></a>
-        <span id="AutoSaveStatus"></span>
     </div>
 </kantega:section>
 

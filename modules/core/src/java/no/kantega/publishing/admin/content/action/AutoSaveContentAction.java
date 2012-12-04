@@ -14,6 +14,7 @@ import no.kantega.publishing.common.exception.MultipleEditorInstancesException;
 import no.kantega.publishing.common.service.ContentManagementService;
 import org.springframework.web.servlet.ModelAndView;
 import org.springframework.web.servlet.View;
+import org.springframework.web.servlet.mvc.Controller;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -21,13 +22,10 @@ import javax.servlet.http.HttpSession;
 import java.util.HashMap;
 import java.util.Map;
 
-public class AutoSaveContentAction extends AdminController {
+public class AutoSaveContentAction implements Controller {
     private View view;
 
-
-    @Override
-    public ModelAndView handleRequestInternal(HttpServletRequest request, HttpServletResponse response) throws Exception {
-
+    public final ModelAndView handleRequest(HttpServletRequest request, HttpServletResponse response) throws Exception {
 
         HttpSession session = request.getSession();
         Content content = (Content)session.getAttribute(AdminSessionAttributes.CURRENT_EDIT_CONTENT);
@@ -40,7 +38,7 @@ public class AutoSaveContentAction extends AdminController {
         int currentId = param.getInt("currentId");
 
         if (currentId != content.getId()) {
-            throw new MultipleEditorInstancesException();
+            //throw new MultipleEditorInstancesException();
         }
 
         SaveContentHelper helper = new SaveContentHelper(request, content, AttributeDataType.CONTENT_DATA);
@@ -60,17 +58,9 @@ public class AutoSaveContentAction extends AdminController {
 
         Map<String, Object> model = new HashMap<String, Object>();
 
-
-        if ((request.getHeader("Accept") != null) && request.getHeader("Accept").contains("application/json")) {
-            response.setContentType("application/json");
-        } else {
-            // Needed for Firefox
-            response.setContentType("text/plain");
-        }
-
         model.put("contentId", savedContent.getId());
 
-        return new ModelAndView(view);
+        return new ModelAndView(view, model);
     }
 
     public void setView(View view) {

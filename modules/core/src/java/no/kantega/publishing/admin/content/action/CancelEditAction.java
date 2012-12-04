@@ -16,6 +16,7 @@
 
 package no.kantega.publishing.admin.content.action;
 
+import no.kantega.commons.exception.NotAuthorizedException;
 import no.kantega.publishing.common.service.ContentManagementService;
 import no.kantega.publishing.common.service.lock.LockManager;
 import no.kantega.publishing.common.data.ContentIdentifier;
@@ -41,22 +42,46 @@ public class CancelEditAction implements Controller {
         Content content = (Content)session.getAttribute(AdminSessionAttributes.CURRENT_EDIT_CONTENT);
         if (content != null) {
             LockManager.releaseLock(content.getId());
-            ContentIdentifier cid = new ContentIdentifier();
             if (content.isNew()) {
-                // New content, show parent
-                Association a = content.getAssociation();
-                cid.setAssociationId(a.getParentAssociationId());
-                cid.setLanguage(content.getLanguage());
+                content = getParentContent(aksessService, content);
             } else {
                 // Fetch latest version
-                cid.setAssociationId(content.getAssociation().getId());
+                if (content.isAutoSaved() && content.shouldDeleteAutosavedVersionOnCancelEdit()) {
+                    ContentIdentifier cid = content.getContentIdentifier();
+                    if (isFirstVersion(content)) {
+                        content = getParentContent(aksessService, content);
+                        aksessService.deleteContent(cid);
+                    } else {
+                        cid.setVersion(content.getVersion());
+                        aksessService.deleteContentVersion(cid);
+                        content = getLastContentVersion(aksessService, content);
+                    }
+                } else {
+                    content = getLastContentVersion(aksessService, content);
+                }
             }
 
-            content = aksessService.getContent(cid);
             session.setAttribute(AdminSessionAttributes.CURRENT_NAVIGATE_CONTENT, content);
             session.removeAttribute(AdminSessionAttributes.CURRENT_EDIT_CONTENT);
         }
 
         return new ModelAndView(new RedirectView("Navigate.action"));
+    }
+
+    private Content getLastContentVersion(ContentManagementService aksessService, Content content) throws NotAuthorizedException {
+        ContentIdentifier cidLastVersion = new ContentIdentifier();
+        cidLastVersion.setAssociationId(content.getAssociation().getId());
+        content = aksessService.getContent(cidLastVersion);
+        return content;
+    }
+
+    private boolean isFirstVersion(Content content) {
+        return content.getVersion() == 1;
+    }
+
+    private Content getParentContent(ContentManagementService aksessService, Content content) throws NotAuthorizedException {
+        ContentIdentifier cid = new ContentIdentifier();
+        cid.setAssociationId(content.getAssociation().getParentAssociationId());
+        return aksessService.getContent(cid);
     }
 }

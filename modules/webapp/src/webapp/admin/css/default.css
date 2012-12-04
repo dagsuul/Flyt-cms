@@ -533,6 +533,12 @@ table.fullWidth {
 }
 
 
+#AutoSaveStatus {
+    float:right;
+    display:none;
+    padding-right: 20px;
+}
+
 /************** Buttons **************/
 #Content .buttonBar {
     height: 50px;
